@@ -4,6 +4,7 @@ import {
     signInWithPopup
 } from 'firebase/auth';
 import { doc, setDoc, getDoc } from 'firebase/firestore';
+import { Aperture, BellRinging, Popcorn } from '@phosphor-icons/react';
 import { auth, db } from '../firebase';
 import './Auth.css';
 
@@ -76,15 +77,15 @@ function Auth({ onLogin }) {
 
                     <div className="auth-features">
                         <div className="feature-item">
-                            <span className="feature-icon">🎡</span>
+                            <span className="feature-icon"><Aperture size={24} weight="duotone" /></span>
                             <span>Spin the wheel together</span>
                         </div>
                         <div className="feature-item">
-                            <span className="feature-icon">🔔</span>
+                            <span className="feature-icon"><BellRinging size={24} weight="duotone" /></span>
                             <span>Get notified of spins</span>
                         </div>
                         <div className="feature-item">
-                            <span className="feature-icon">🍿</span>
+                            <span className="feature-icon"><Popcorn size={24} weight="duotone" /></span>
                             <span>Share snack choices</span>
                         </div>
                     </div>

@@ -197,11 +197,17 @@ export function usePartner(couple, currentUserId) {
         }
 
         const isUser1 = couple.user1Id === currentUserId;
-        setPartner({
-            id: isUser1 ? couple.user2Id : couple.user1Id,
-            name: isUser1 ? couple.user2Name : couple.user1Name,
-            photo: isUser1 ? couple.user2Photo : couple.user1Photo
-        });
+        const partnerId = isUser1 ? couple.user2Id : couple.user1Id;
+
+        if (!partnerId) {
+            setPartner(null);
+        } else {
+            setPartner({
+                id: partnerId,
+                name: isUser1 ? couple.user2Name : couple.user1Name,
+                photo: isUser1 ? couple.user2Photo : couple.user1Photo
+            });
+        }
     }, [couple, currentUserId]);
 
     return partner;

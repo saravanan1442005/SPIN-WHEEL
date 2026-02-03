@@ -9,33 +9,75 @@
     justify-content: space-between;
     align-items: center;
     margin-bottom: 0.5rem;
+    padding: 1rem;
+    background: rgba(255, 255, 255, 0.03);
+    border: 1px solid rgba(255, 255, 255, 0.05);
+    border-radius: 20px;
+    backdrop-filter: blur(10px);
 }
 
 .header-left {
     display: flex;
     align-items: center;
-    gap: 1rem;
+    gap: 1.25rem;
     text-align: left;
 }
 
-.header-logo {
+.logo-badge {
     width: 50px;
     height: 50px;
+    background: rgba(255, 255, 255, 0.05);
+    border-radius: 12px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    border: 1px solid rgba(255, 255, 255, 0.1);
+}
+
+.title {
+    font-size: 1.5rem;
+    font-weight: 700;
+    margin: 0;
+    background: linear-gradient(135deg, #ffffff 0%, #a5b4fc 100%);
+    -webkit-background-clip: text;
+    -webkit-text-fill-color: transparent;
+    letter-spacing: -0.02em;
+}
+
+.connection-status {
+    font-size: 0.9rem;
+    font-weight: 500;
+    margin-top: 0.2rem;
+    display: flex;
+    align-items: center;
+    gap: 0.4rem;
+}
+
+.connection-status.connected {
+    color: #f5576c;
+}
+
+.connection-status.solo {
+    color: #4facfe;
+}
+
+.heart-icon {
+    animation: pulse 1.5s infinite ease-in-out;
 }
 
 .header-right {
     display: flex;
     align-items: center;
-    gap: 0.75rem;
+    gap: 1rem;
 }
 
 .user-avatar,
 .partner-avatar {
-    width: 42px;
-    height: 42px;
+    width: 40px;
+    height: 40px;
     border-radius: 50%;
     object-fit: cover;
-    border: 2px solid #667eea;
+    border: 2px solid rgba(255, 255, 255, 0.1);
     transition: transform 0.3s ease;
 }
 
@@ -48,44 +90,52 @@
     transform: scale(1.1);
 }
 
-.logout-button {
-    background: rgba(255, 255, 255, 0.1);
-    border: 1px solid rgba(255, 255, 255, 0.2);
-    border-radius: 8px;
-    padding: 0.5rem 0.75rem;
-    font-size: 1.2rem;
+.add-partner-nav-btn {
+    background: rgba(79, 172, 254, 0.15);
+    color: #4facfe;
+    border: 1px solid rgba(79, 172, 254, 0.3);
+    border-radius: 10px;
+    padding: 0.5rem 1rem;
+    font-size: 0.9rem;
+    font-weight: 600;
     cursor: pointer;
-    transition: all 0.3s ease;
-    font-family: 'Outfit', sans-serif;
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+    transition: all 0.2s;
+    font-family: inherit;
+}
+
+.add-partner-nav-btn:hover {
+    background: rgba(79, 172, 254, 0.25);
+    border-color: rgba(79, 172, 254, 0.5);
+    transform: translateY(-1px);
+}
+
+.logout-button {
+    background: rgba(255, 255, 255, 0.05);
+    border: 1px solid rgba(255, 255, 255, 0.1);
+    border-radius: 10px;
+    width: 40px;
+    height: 40px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    color: rgba(255, 255, 255, 0.7);
+    cursor: pointer;
+    transition: all 0.2s ease;
 }
 
 .logout-button:hover {
-    background: rgba(255, 255, 255, 0.15);
-    transform: scale(1.05);
-}
-
-.connection-status {
-    font-size: 0.85rem;
-    color: #4facfe;
-    font-weight: 500;
-    margin-top: 0.25rem;
-}
-
-.title {
-    font-size: 3.5rem;
-    font-weight: 800;
-    background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
-    -webkit-background-clip: text;
-    background-clip: text;
-    -webkit-text-fill-color: transparent;
-    margin-bottom: 0.5rem;
-    letter-spacing: -1px;
+    background: rgba(245, 87, 108, 0.15);
+    border-color: rgba(245, 87, 108, 0.3);
+    color: #f5576c;
 }
 
 .subtitle {
-    font-size: 1.2rem;
-    color: rgba(255, 255, 255, 0.7);
-    font-weight: 400;
+    font-size: 1.1rem;
+    color: rgba(255, 255, 255, 0.5);
+    margin-top: 1.5rem;
 }
 
 @keyframes fadeInDown {
@@ -100,39 +150,37 @@
     }
 }
 
-@media (max-width: 768px) {
-    .title {
-        font-size: 2.5rem;
+@keyframes pulse {
+
+    0%,
+    100% {
+        transform: scale(1);
     }
 
-    .subtitle {
-        font-size: 1rem;
-    }
-
-    .header-left {
-        gap: 0.5rem;
-    }
-
-    .header-logo {
-        width: 40px;
-        height: 40px;
-    }
-
-    .user-avatar,
-    .partner-avatar {
-        width: 36px;
-        height: 36px;
+    50% {
+        transform: scale(1.2);
     }
 }
 
-@media (max-width: 480px) {
-    .title {
-        font-size: 2rem;
+@media (max-width: 640px) {
+    .header-content {
+        flex-direction: column;
+        gap: 1.5rem;
+        text-align: center;
     }
 
-    .header-content {
-        flex-wrap: wrap;
+    .header-left {
+        flex-direction: column;
+        text-align: center;
+        gap: 0.75rem;
+    }
+
+    .header-right {
+        width: 100%;
         justify-content: center;
-        gap: 1rem;
+    }
+
+    .title {
+        font-size: 1.25rem;
     }
 }

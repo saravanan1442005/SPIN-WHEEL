@@ -16,6 +16,7 @@ function App() {
   const [coupleId, setCoupleId] = useState(null);
   const [spinning, setSpinning] = useState(false);
   const [result, setResult] = useState(null);
+  const [managingConnection, setManagingConnection] = useState(false);
 
   const { couple } = useCouple(coupleId);
   const { allSnacks, activeSnacks, addSnack, toggleSnackActive, deleteSnack } = useSnacks(coupleId);
@@ -40,6 +41,11 @@ function App() {
 
   const handleConnected = (newCoupleId) => {
     setCoupleId(newCoupleId);
+    setManagingConnection(false);
+  };
+
+  const handleAddPartner = () => {
+    setManagingConnection(true);
   };
 
   const handleAddSnack = async (name, price) => {
@@ -72,6 +78,7 @@ function App() {
     await signOut(auth);
     setUser(null);
     setCoupleId(null);
+    setManagingConnection(false);
   };
 
   if (loading) {
@@ -87,8 +94,16 @@ function App() {
     return <Auth onLogin={handleLogin} />;
   }
 
-  if (!coupleId) {
-    return <CoupleConnection user={user} onConnected={handleConnected} />;
+  if (!coupleId || managingConnection) {
+    return (
+      <CoupleConnection
+        user={user}
+        onConnected={handleConnected}
+        isManageMode={managingConnection}
+        currentCouple={couple}
+        onBack={() => setManagingConnection(false)}
+      />
+    );
   }
 
   return (
@@ -102,7 +117,7 @@ function App() {
       )}
 
       <div className="container">
-        <Header user={user} partner={partner} onLogout={handleLogout} />
+        <Header user={user} partner={partner} onLogout={handleLogout} onAddPartner={handleAddPartner} />
 
         <main className="main-content">
           <WheelSection
@@ -125,7 +140,7 @@ function App() {
         </main>
 
         <footer className="footer">
-          <p>Made with ❤️ for {partner?.name && `you & ${partner.name}`}</p>
+          <p>Made with ❤️ {partner ? `for you & ${partner.name}` : 'for you'}</p>
         </footer>
       </div>
     </div>

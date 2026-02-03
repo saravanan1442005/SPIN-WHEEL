@@ -1,16 +1,23 @@
+import { Heart, SignOut, UserPlus, Popcorn } from '@phosphor-icons/react';
 import './Header.css';
 
-function Header({ user, partner, onLogout }) {
+function Header({ user, partner, onLogout, onAddPartner }) {
     return (
         <header className="header">
             <div className="header-content">
                 <div className="header-left">
-                    <img src="/favicon.png" alt="PULSE" className="header-logo" />
+                    <div className="logo-badge">
+                        <Popcorn size={28} weight="duotone" color="#FFD700" />
+                    </div>
                     <div>
-                        <h1 className="title">🍿 Snack Spinner</h1>
-                        {partner && (
-                            <p className="connection-status">
-                                Connected with {partner.name} 💕
+                        <h1 className="title">Snack Spinner</h1>
+                        {partner ? (
+                            <p className="connection-status connected">
+                                Connected with {partner.name} <Heart weight="fill" color="#f5576c" className="heart-icon" />
+                            </p>
+                        ) : (
+                            <p className="connection-status solo">
+                                Solo Mode 👤
                             </p>
                         )}
                     </div>
@@ -20,11 +27,19 @@ function Header({ user, partner, onLogout }) {
                     {partner?.photo && (
                         <img src={partner.photo} alt={partner.name} className="partner-avatar" title={partner.name} />
                     )}
+
+                    {!partner && (
+                        <button onClick={onAddPartner} className="add-partner-nav-btn" title="Connect with Partner">
+                            <UserPlus size={20} /> Add Partner
+                        </button>
+                    )}
+
                     {user?.photoURL && (
                         <img src={user.photoURL} alt={user.displayName} className="user-avatar" title="You" />
                     )}
+
                     <button onClick={onLogout} className="logout-button" title="Logout">
-                        🚪
+                        <SignOut size={24} />
                     </button>
                 </div>
             </div>

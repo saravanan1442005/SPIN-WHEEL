@@ -42,11 +42,26 @@ service cloud.firestore {
       allow read, write: if request.auth != null && request.auth.uid == userId;
     }
     
-    // Couple members can read/write couple data
+    // Allow authenticated users to create couples and read couples to join
     match /couples/{coupleId} {
-      allow read, write: if request.auth != null && 
-        exists(/databases/$(database)/documents/users/$(request.auth.uid)) &&
-        get(/databases/$(database)/documents/users/$(request.auth.uid)).data.coupleId == coupleId;
+      // Allow creating a new couple
+      allow create: if request.auth != null && 
+        request.resource.data.user1Id == request.auth.uid;
+      
+      // Allow reading to find couple by code for joining
+      allow read: if request.auth != null;
+      
+      // Allow updating if user is part of the couple (for joining)
+      allow update: if request.auth != null && (
+        resource.data.user1Id == request.auth.uid ||
+        resource.data.user2Id == request.auth.uid ||
+        (resource.data.user2Id == null && !resource.data.connected)
+      );
+      
+      // Allow delete only if user created it and it's not connected
+      allow delete: if request.auth != null && 
+        resource.data.user1Id == request.auth.uid &&
+        !resource.data.connected;
     }
     
     // Couple members can read/write snacks

@@ -1,7 +1,9 @@
 import { useState } from 'react';
+import { Plus, Minus, Trash, PlusCircle, CheckCircle, Info, Warning } from '@phosphor-icons/react';
 import './ControlsSection.css';
 
 function ControlsSection({ allSnacks, activeSnacks, onAddSnack, onRemoveFromWheel, onAddToWheel, onDeletePermanently }) {
+    // ... (keep state)
     const [itemName, setItemName] = useState('');
     const [itemPrice, setItemPrice] = useState('');
     const [notification, setNotification] = useState(null);
@@ -12,6 +14,7 @@ function ControlsSection({ allSnacks, activeSnacks, onAddSnack, onRemoveFromWhee
     };
 
     const handleAddSnack = () => {
+        // ... (keep logic)
         const name = itemName.trim();
         const price = parseInt(itemPrice);
 
@@ -37,6 +40,7 @@ function ControlsSection({ allSnacks, activeSnacks, onAddSnack, onRemoveFromWhee
         }
     };
 
+    // ... (keep other handlers)
     const handleRemoveFromWheel = (snack) => {
         onRemoveFromWheel(snack.id);
         showNotification(`Removed ${snack.name} from wheel`, 'info');
@@ -62,6 +66,9 @@ function ControlsSection({ allSnacks, activeSnacks, onAddSnack, onRemoveFromWhee
         <div className="controls-section">
             {notification && (
                 <div className={`notification ${notification.type}`}>
+                    {notification.type === 'success' && <CheckCircle size={20} weight="fill" />}
+                    {notification.type === 'error' && <Warning size={20} weight="fill" />}
+                    {notification.type === 'info' && <Info size={20} weight="fill" />}
                     {notification.message}
                 </div>
             )}
@@ -98,7 +105,8 @@ function ControlsSection({ allSnacks, activeSnacks, onAddSnack, onRemoveFromWhee
                     </div>
                 </div>
                 <button className="add-button" onClick={handleAddSnack}>
-                    <span>➕ Add New Snack</span>
+                    <PlusCircle size={20} weight="bold" />
+                    <span>Add New Snack</span>
                 </button>
             </div>
 
@@ -121,7 +129,7 @@ function ControlsSection({ allSnacks, activeSnacks, onAddSnack, onRemoveFromWhee
                                     onClick={() => handleRemoveFromWheel(snack)}
                                     title="Remove from wheel"
                                 >
-                                    ➖ Remove
+                                    <Minus size={16} weight="bold" /> Remove
                                 </button>
                             </div>
                         ))
@@ -147,14 +155,14 @@ function ControlsSection({ allSnacks, activeSnacks, onAddSnack, onRemoveFromWhee
                                         onClick={() => handleAddToWheel(snack)}
                                         title="Add to wheel"
                                     >
-                                        ➕ Add
+                                        <Plus size={16} weight="bold" /> Add
                                     </button>
                                     <button
                                         className="delete-button-small"
                                         onClick={() => handleDeletePermanently(snack)}
                                         title="Delete permanently"
                                     >
-                                        🗑️
+                                        <Trash size={18} />
                                     </button>
                                 </div>
                             </div>
