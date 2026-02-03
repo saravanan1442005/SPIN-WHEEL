@@ -2,9 +2,7 @@
 
 ## 🚀 Getting Started
 
-This app uses Firebase for authentication and real-time database
-
-. Follow these steps to set it up:
+This app uses Firebase for authentication and real-time database. Follow these steps to set it up:
 
 ### Step 1: Create a Firebase Project
 
@@ -31,37 +29,47 @@ This app uses Firebase for authentication and real-time database
 
 ### Step 4: Set Firestore Security Rules
 
-Go to the **"Rules"** tab in Firestore and replace with:
+**IMPORTANT**: You must update your Firestore security rules to allow friend requests to work.
+
+Go to the **"Rules"** tab in Firestore and replace everything with:
 
 ```javascript
 rules_version = '2';
 service cloud.firestore {
   match /databases/{database}/documents {
-    // Users can read/write their own profile
+    // Users Collection
     match /users/{userId} {
-      allow read, write: if request.auth != null && request.auth.uid == userId;
+      // Allow reading any user profile (needed for searching by email)
+      allow read: if request.auth != null;
+      // Allow write only by the owner
+      allow write: if request.auth != null && request.auth.uid == userId;
+    }
+
+    // Friend Requests Collection
+    match /requests/{requestId} {
+      // Allow creating a request if authenticated
+      allow create: if request.auth != null && request.resource.data.fromUserId == request.auth.uid;
+      
+      // Allow reading and deleting if you are the sender OR the receiver
+      allow read, delete: if request.auth != null && (
+        resource.data.fromUserId == request.auth.uid || 
+        resource.data.toUserId == request.auth.uid
+      );
     }
     
-    // Allow authenticated users to create couples and read couples to join
+    // Couples Collection
     match /couples/{coupleId} {
       // Allow creating a new couple
-      allow create: if request.auth != null && 
-        request.resource.data.user1Id == request.auth.uid;
+      allow create: if request.auth != null;
       
-      // Allow reading to find couple by code for joining
+      // Allow reading if authenticated
       allow read: if request.auth != null;
       
-      // Allow updating if user is part of the couple (for joining)
-      allow update: if request.auth != null && (
-        resource.data.user1Id == request.auth.uid ||
-        resource.data.user2Id == request.auth.uid ||
-        (resource.data.user2Id == null && !resource.data.connected)
-      );
+      // Allow updating if authenticated
+      allow update: if request.auth != null;
       
-      // Allow delete only if user created it and it's not connected
-      allow delete: if request.auth != null && 
-        resource.data.user1Id == request.auth.uid &&
-        !resource.data.connected;
+      // Allow delete if authenticated
+      allow delete: if request.auth != null;
     }
     
     // Couple members can read/write snacks
@@ -93,90 +101,10 @@ service cloud.firestore {
 ### Step 6: Update Your App
 
 1. Open `src/firebase.js`
-2. Replace the placeholder config with your actual Firebase config:
-
-```javascript
-const firebaseConfig = {
-  apiKey: "YOUR_ACTUAL_API_KEY",
-  authDomain: "your-project-id.firebaseapp.com",
-  projectId: "your-project-id",
-  storageBucket: "your-project-id.appspot.com",
-  messagingSenderId: "123456789",
-  appId: "1:123456789:web:abcdef123456"
-};
-```
+2. Replace the placeholder config with your actual Firebase config
 
 ### Step 7: Run the App
 
 ```bash
 npm run dev
 ```
-
-## 🎯 How It Works
-
-### For You and Your Girlfriend:
-
-1. **Both Sign Up** - Each person creates an account
-2. **Connect Together** - Once logged in, connect with each other using a unique couple code
-3. **Share the Wheel** - Both can add/remove snacks from the shared wheel
-4. **Spin & Notify** - When one person spins, the other gets notified with the result!
-
-### Features:
-
-- ✅ **Real-time Sync** - Changes appear instantly for both
-- ✅ **Shared Snack Library** - Both can manage the snacks
-- ✅ **Spin Notifications** - Get notified when your partner spins
-- ✅ **Spin History** - See past spins and results
-- ✅ **Secure** - Firebase security rules protect your data
-
-## 📱 Database Structure
-
-```
-users/
-  {userId}/
-    - uid
-    - email
-    - displayName
-    - coupleId
-    - createdAt
-
-couples/
-  {coupleId}/
-    - user1Id
-    - user2Id
-    - user1Name
-    - user2Name
-    - createdAt
-    
-    snacks/
-      {snackId}/
-        - id
-        - name
-        - price
-        - active (boolean)
-        - createdBy
-        - createdAt
-    
-    spins/
-      {spinId}/
-        - snackName
-        - price
-        - spinnedBy
-        - spinnedByName
-        - timestamp
-```
-
-## 🔒 Security
-
-- All data is protected by Firebase security rules
-- Only authenticated users can access data
-- Users can only access their couple's data
-- Partner connection requires mutual agreement
-
-## 💝 Enjoy!
-
-Now you and your girlfriend can decide on snacks together, no matter where you are! 🍿✨
-
----
-
-Made with ❤️ for couples who can't decide what to eat

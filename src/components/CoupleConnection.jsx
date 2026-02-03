@@ -1,336 +1,315 @@
 import { useState, useEffect } from 'react';
-import { doc, setDoc, getDoc, updateDoc, collection, query, where, getDocs, onSnapshot } from 'firebase/firestore';
-import { Heart, DiceFive, Link as LinkIcon, User, ArrowLeft, Copy, Lightbulb, X, Users, Alien } from '@phosphor-icons/react';
+import { doc, setDoc, getDoc, updateDoc, collection, query, where, getDocs, onSnapshot, deleteDoc, addDoc } from 'firebase/firestore';
+import { Heart, PaperPlaneRight, User, ArrowLeft, EnvelopeSimple, CheckCircle, XCircle, UserPlus, X } from '@phosphor-icons/react';
 import { db } from '../firebase';
 import './CoupleConnection.css';
 
 function CoupleConnection({ user, onConnected, isManageMode, onBack, currentCouple }) {
-    const [coupleCode, setCoupleCode] = useState('');
-    const [generatedCode, setGeneratedCode] = useState('');
+    const [email, setEmail] = useState('');
     const [loading, setLoading] = useState(false);
     const [error, setError] = useState('');
-    const [mode, setMode] = useState('choose'); // 'choose', 'generate', 'enter'
+    const [successMsg, setSuccessMsg] = useState('');
+    const [invitations, setInvitations] = useState([]);
+    const [sentInvites, setSentInvites] = useState([]);
 
+    // Listen for incoming friend requests
     useEffect(() => {
-        if (!isManageMode) {
-            checkExistingConnection();
-        } else if (currentCouple) {
-            // Managing mode with existing couple
-        }
-    }, [user, isManageMode]);
+        if (!user?.uid) return;
 
-    // Listen for real-time updates when waiting for partner
+        const q = query(collection(db, 'requests'), where('toUserId', '==', user.uid));
+        const unsubscribe = onSnapshot(q, (snapshot) => {
+            const reqs = [];
+            snapshot.forEach(doc => {
+                reqs.push({ id: doc.id, ...doc.data() });
+            });
+            setInvitations(reqs);
+        });
+
+        // Also listen for sent invites to show status
+        const qSent = query(collection(db, 'requests'), where('fromUserId', '==', user.uid));
+        const unsubscribeSent = onSnapshot(qSent, (snapshot) => {
+            const reqs = [];
+            snapshot.forEach(doc => {
+                reqs.push({ id: doc.id, ...doc.data() });
+            });
+            setSentInvites(reqs);
+        });
+
+        return () => {
+            unsubscribe();
+            unsubscribeSent();
+        };
+    }, [user]);
+
+    // Check if I was accepted (via user profile update)
     useEffect(() => {
-        if (!user?.uid || mode !== 'generate' || !generatedCode) {
+        if (!user?.uid) return;
+        const unsubscribe = onSnapshot(doc(db, 'users', user.uid), (docSnap) => {
+            if (docSnap.exists()) {
+                const data = docSnap.data();
+                if (data.coupleId) {
+                    if (isManageMode) {
+                        // In manage mode, only redirect if we joined a NEW couple
+                        if (currentCouple && data.coupleId !== currentCouple.coupleId) {
+                            onConnected(data.coupleId);
+                        }
+                    } else {
+                        // Initial load or not managing: always connect
+                        onConnected(data.coupleId);
+                    }
+                }
+            }
+        });
+        return () => unsubscribe();
+    }, [user, onConnected, isManageMode, currentCouple]);
+
+    const handleSendInvite = async () => {
+        if (!email.trim()) {
+            setError('Please enter an email address');
             return;
         }
 
-        // Get coupleId from user document
-        const getUserCoupleId = async () => {
-            const userDoc = await getDoc(doc(db, 'users', user.uid));
-            return userDoc.exists() ? userDoc.data().coupleId : null;
-        };
+        if (email.trim().toLowerCase() === user.email.toLowerCase()) {
+            setError("You can't invite yourself!");
+            return;
+        }
 
-        getUserCoupleId().then(coupleId => {
-            if (!coupleId) return;
+        setLoading(true);
+        setError('');
+        setSuccessMsg('');
 
-            // Listen to couple document for connection status changes
-            const unsubscribe = onSnapshot(
-                doc(db, 'couples', coupleId),
-                (coupleDoc) => {
-                    if (coupleDoc.exists() && coupleDoc.data().connected) {
-                        onConnected(coupleId);
-                    }
-                },
-                (error) => {
-                    console.error('Error listening to couple updates:', error);
-                }
-            );
+        try {
+            // 1. Find user by email
+            const usersRef = collection(db, 'users');
+            const q = query(usersRef, where('email', '==', email.trim()));
+            const querySnapshot = await getDocs(q);
 
-            return () => unsubscribe();
-        });
-    }, [mode, generatedCode, user, onConnected]);
-
-    const checkExistingConnection = async () => {
-        const userDoc = await getDoc(doc(db, 'users', user.uid));
-        if (userDoc.exists() && userDoc.data().coupleId) {
-            const coupleDoc = await getDoc(doc(db, 'couples', userDoc.data().coupleId));
-            if (coupleDoc.exists()) {
-                onConnected(userDoc.data().coupleId);
+            if (querySnapshot.empty) {
+                setError('User not found. Ask them to sign up first!');
+                setLoading(false);
+                return;
             }
+
+            const targetUserDoc = querySnapshot.docs[0];
+            const targetUser = targetUserDoc.data();
+
+            if (targetUser.coupleId) {
+                // Check if it's a real couple or solo? 
+                // We'll assume if they have a coupleId they are "taken" or need to leave it first.
+                // But wait, if they are "Solo", they have a coupleId too. 
+                // We might need to check the couple doc.
+                const coupleDoc = await getDoc(doc(db, 'couples', targetUser.coupleId));
+                if (coupleDoc.exists()) {
+                    const cData = coupleDoc.data();
+                    if (cData.connected) {
+                        setError('This user is already connected with someone.');
+                        setLoading(false);
+                        return;
+                    }
+                    // If not connected (Solo), they can receive invites!
+                }
+            }
+
+            // 2. Check if request already exists
+            const requestsRef = collection(db, 'requests');
+            const qReq = query(requestsRef,
+                where('fromUserId', '==', user.uid),
+                where('toUserId', '==', targetUser.uid)
+            );
+            const reqSnap = await getDocs(qReq);
+
+            if (!reqSnap.empty) {
+                setError('You already sent an invite to this user.');
+                setLoading(false);
+                return;
+            }
+
+            // 3. Send Request
+            await addDoc(collection(db, 'requests'), {
+                fromUserId: user.uid,
+                fromName: user.displayName,
+                fromPhoto: user.photoURL,
+                toUserId: targetUser.uid,
+                status: 'pending',
+                createdAt: new Date().toISOString()
+            });
+
+            setSuccessMsg(`Invitation sent to ${targetUser.displayName}!`);
+            setEmail('');
+        } catch (err) {
+            console.error('Error sending invite:', err);
+            setError(`Failed to send: ${err.message}`);
+        } finally {
+            setLoading(false);
         }
     };
 
-    const startSoloSession = async () => {
+    const handleAcceptInvite = async (request) => {
         setLoading(true);
         try {
-            const code = Math.random().toString(36).substring(2, 8).toUpperCase();
-            const coupleId = `couple_${code}_${Date.now()}`;
-
+            // 1. Create Couple
+            const coupleId = `couple_${Date.now()}`;
             await setDoc(doc(db, 'couples', coupleId), {
                 coupleId,
-                code,
+                user1Id: request.fromUserId,
+                user1Name: request.fromName,
+                user1Photo: request.fromPhoto,
+                user2Id: user.uid,
+                user2Name: user.displayName,
+                user2Photo: user.photoURL,
+                createdAt: new Date().toISOString(),
+                connected: true,
+                connectedAt: new Date().toISOString()
+            });
+
+            // 2. Update Both Users
+            await updateDoc(doc(db, 'users', user.uid), { coupleId });
+            await updateDoc(doc(db, 'users', request.fromUserId), { coupleId });
+
+            // 3. Delete Request
+            await deleteDoc(doc(db, 'requests', request.id));
+
+            // 4. Connect
+            onConnected(coupleId);
+
+        } catch (err) {
+            console.error('Error accepting:', err);
+            setError('Failed to connect.');
+        } finally {
+            setLoading(false);
+        }
+    };
+
+    const handleDecline = async (reqId) => {
+        try {
+            await deleteDoc(doc(db, 'requests', reqId));
+        } catch (err) {
+            console.error(err);
+        }
+    };
+
+    const handleSkip = async () => {
+        setLoading(true);
+        try {
+            // Create "Solo" couple
+            const coupleId = `solo_${user.uid}_${Date.now()}`;
+            await setDoc(doc(db, 'couples', coupleId), {
+                coupleId,
                 user1Id: user.uid,
                 user1Name: user.displayName,
                 user1Photo: user.photoURL,
-                user2Id: null,
-                user2Name: null,
-                user2Photo: null,
+                user2Id: null, // No partner
                 createdAt: new Date().toISOString(),
-                connected: false
+                connected: false // Not connected to partner
             });
 
             await updateDoc(doc(db, 'users', user.uid), { coupleId });
             onConnected(coupleId);
         } catch (err) {
-            console.error('Error starting solo:', err);
-            setError('Failed to start. Please try again.');
+            console.error(err);
+            setError('Failed to start solo.');
         } finally {
             setLoading(false);
         }
     };
-
-    const generateCoupleCode = async () => {
-        if (currentCouple) {
-            setGeneratedCode(currentCouple.code);
-            setMode('generate');
-            return;
-        }
-
-        setLoading(true);
-        setError('');
-
-        try {
-            const code = Math.random().toString(36).substring(2, 8).toUpperCase();
-            const coupleId = `couple_${code}_${Date.now()}`;
-
-            await setDoc(doc(db, 'couples', coupleId), {
-                coupleId,
-                code,
-                user1Id: user.uid,
-                user1Name: user.displayName,
-                user1Photo: user.photoURL,
-                user2Id: null,
-                user2Name: null,
-                user2Photo: null,
-                createdAt: new Date().toISOString(),
-                connected: false
-            });
-
-            await updateDoc(doc(db, 'users', user.uid), {
-                coupleId
-            });
-
-            setGeneratedCode(code);
-            setMode('generate');
-        } catch (err) {
-            console.error('Error generating code:', err);
-            setError('Failed to generate code. Please try again.');
-        } finally {
-            setLoading(false);
-        }
-    };
-
-    const joinWithCode = async () => {
-        if (!coupleCode.trim()) {
-            setError('Please enter a code');
-            return;
-        }
-
-        setLoading(true);
-        setError('');
-
-        try {
-            const couplesRef = collection(db, 'couples');
-            const q = query(couplesRef, where('code', '==', coupleCode.toUpperCase()));
-            const querySnapshot = await getDocs(q);
-
-            if (querySnapshot.empty) {
-                setError('Invalid code. Please check and try again.');
-                setLoading(false);
-                return;
-            }
-
-            const coupleDoc = querySnapshot.docs[0];
-            const coupleData = coupleDoc.data();
-
-            if (coupleData.connected) {
-                setError('This code is already in use. Ask your partner for a new code.');
-                setLoading(false);
-                return;
-            }
-
-            if (coupleData.user1Id === user.uid) {
-                setError('You cannot connect with yourself!');
-                setLoading(false);
-                return;
-            }
-
-            await updateDoc(doc(db, 'couples', coupleData.coupleId), {
-                user2Id: user.uid,
-                user2Name: user.displayName,
-                user2Photo: user.photoURL,
-                connected: true,
-                connectedAt: new Date().toISOString()
-            });
-
-            await updateDoc(doc(db, 'users', user.uid), {
-                coupleId: coupleData.coupleId
-            });
-
-            onConnected(coupleData.coupleId);
-        } catch (err) {
-            console.error('Error joining couple:', err);
-            setError('Failed to join. Please try again.');
-        } finally {
-            setLoading(false);
-        }
-    };
-
-    if (mode === 'generate' && generatedCode) {
-        return (
-            <div className="couple-connection-container">
-                <div className="couple-connection-card">
-                    <div className="icon-badge">
-                        <Users size={48} weight="duotone" color="#667eea" />
-                    </div>
-                    <h2 className="couple-title">Share Code</h2>
-                    <p className="couple-subtitle">Share this code with your partner to connect.</p>
-
-                    <div className="code-display">
-                        <div className="code-box">{generatedCode}</div>
-                        <button
-                            onClick={() => navigator.clipboard.writeText(generatedCode)}
-                            className="copy-button"
-                        >
-                            <Copy size={20} /> Copy Code
-                        </button>
-                    </div>
-
-                    <div className="waiting-indicator">
-                        <div className="spinner-small"></div>
-                        <p>Waiting for partner to join...</p>
-                    </div>
-
-                    <button
-                        onClick={() => {
-                            setMode('choose');
-                            setGeneratedCode('');
-                        }}
-                        className="back-button"
-                    >
-                        <ArrowLeft size={20} /> Go Back
-                    </button>
-
-                    <button
-                        onClick={() => {
-                            setMode('enter');
-                            setGeneratedCode('');
-                        }}
-                        className="switch-button"
-                    >
-                        <Lightbulb size={20} /> Have a code instead?
-                    </button>
-                </div>
-            </div>
-        );
-    }
-
-    if (mode === 'enter') {
-        return (
-            <div className="couple-connection-container">
-                <div className="couple-connection-card">
-                    <div className="icon-badge">
-                        <LinkIcon size={48} weight="duotone" color="#764ba2" />
-                    </div>
-                    <h2 className="couple-title">Join Couple</h2>
-                    <p className="couple-subtitle">Enter the code from your partner.</p>
-
-                    <div className="code-input-section">
-                        <input
-                            type="text"
-                            value={coupleCode}
-                            onChange={(e) => setCoupleCode(e.target.value.toUpperCase())}
-                            placeholder="6-DIGIT CODE"
-                            maxLength={6}
-                            className="code-input"
-                        />
-
-                        <button
-                            onClick={joinWithCode}
-                            disabled={loading || !coupleCode.trim()}
-                            className="connect-button"
-                        >
-                            {loading ? 'Connecting...' : 'Connect Partner'}
-                        </button>
-                    </div>
-
-                    {error && <div className="error-message">{error}</div>}
-
-                    <button
-                        onClick={() => setMode('choose')}
-                        className="back-button"
-                    >
-                        <ArrowLeft size={20} /> Go Back
-                    </button>
-                </div>
-            </div>
-        );
-    }
 
     return (
         <div className="couple-connection-container">
             <div className="couple-connection-card">
                 <div className="brand-header">
-                    <img src="/favicon.png" alt="PULSE" className="couple-logo" />
-                    <h2 className="couple-title">Get Started</h2>
-                    <p className="couple-subtitle">Connect with a partner or go solo.</p>
+                    <div className="icon-badge">
+                        <UserPlus size={48} weight="duotone" color="#667eea" />
+                    </div>
+                    <h2 className="couple-title">Add Partner</h2>
+                    <p className="couple-subtitle">Connect by email or check invitations</p>
                 </div>
 
-                <div className="connection-options">
-                    <button onClick={generateCoupleCode} disabled={loading} className="option-button generate">
-                        <div className="option-icon-wrapper">
-                            <DiceFive size={32} weight="duotone" />
+                {/* --- SECTIONS --- */}
+
+                {/* 1. Received Invitations */}
+                {invitations.length > 0 && (
+                    <div className="invitations-section">
+                        <h3 className="section-header">💌 Invitations ({invitations.length})</h3>
+                        <div className="invites-list">
+                            {invitations.map(req => (
+                                <div key={req.id} className="invite-card">
+                                    <div className="invite-info">
+                                        <img src={req.fromPhoto} alt={req.fromName} className="invite-avatar" />
+                                        <div>
+                                            <p className="invite-name">{req.fromName}</p>
+                                            <p className="invite-status">wants to connect</p>
+                                        </div>
+                                    </div>
+                                    <div className="invite-actions">
+                                        <button onClick={() => handleAcceptInvite(req)} className="accept-btn" title="Accept">
+                                            <CheckCircle size={32} weight="fill" color="#4caf50" />
+                                        </button>
+                                        <button onClick={() => handleDecline(req.id)} className="decline-btn" title="Decline">
+                                            <XCircle size={32} weight="fill" color="#f5576c" />
+                                        </button>
+                                    </div>
+                                </div>
+                            ))}
                         </div>
-                        <div className="option-content">
-                            <h3>{currentCouple ? 'View My Code' : 'Generate Code'}</h3>
-                            <p>{currentCouple ? 'Show code to partner' : 'Create a new couple code'}</p>
-                        </div>
+                    </div>
+                )}
+
+                {/* 2. Send Invitation */}
+                <div className="send-invite-section">
+                    <div className="input-with-icon">
+                        <EnvelopeSimple size={24} className="input-icon" />
+                        <input
+                            type="email"
+                            placeholder="Partner's Email Address"
+                            value={email}
+                            onChange={(e) => setEmail(e.target.value)}
+                            className="email-search-input"
+                        />
+                    </div>
+
+                    <button
+                        onClick={handleSendInvite}
+                        disabled={loading || !email}
+                        className="send-invite-btn"
+                    >
+                        {loading ? 'Sending...' : 'Send Request'} <PaperPlaneRight weight="bold" />
                     </button>
 
-                    <button onClick={() => setMode('enter')} disabled={loading} className="option-button join">
-                        <div className="option-icon-wrapper">
-                            <LinkIcon size={32} weight="duotone" />
-                        </div>
-                        <div className="option-content">
-                            <h3>Enter Code</h3>
-                            <p>Join an existing couple</p>
-                        </div>
-                    </button>
+                    {error && <div className="error-message">{error}</div>}
+                    {successMsg && <div className="success-message"><CheckCircle size={20} /> {successMsg}</div>}
+                </div>
 
+                {/* 3. Sent Pending Requests */}
+                {sentInvites.length > 0 && (
+                    <div className="sent-list">
+                        <p className="sent-label">Pending Requests:</p>
+                        {sentInvites.map(req => (
+                            <div key={req.id} className="sent-item">
+                                <span>To: {req.toUserId} (Waiting...)</span>
+                                <button onClick={() => handleDecline(req.id)} className="cancel-sent-btn">Cancel</button>
+                            </div>
+                        ))}
+                    </div>
+                )}
+
+                {/* 4. Options (Solo / Back) */}
+                <div className="footer-options">
                     {!isManageMode && (
-                        <button onClick={startSoloSession} disabled={loading} className="option-button skip">
-                            <div className="option-icon-wrapper">
-                                <User size={32} weight="duotone" />
-                            </div>
-                            <div className="option-content">
-                                <h3>Start Solo</h3>
-                                <p>Skip and add partner later</p>
-                            </div>
+                        <>
+                            <div className="divider-line"></div>
+                            <button onClick={handleSkip} className="text-link-btn">
+                                Starting Solo? Click here
+                            </button>
+                        </>
+                    )}
+
+                    {isManageMode && (
+                        <button onClick={onBack} className="back-button close-mode">
+                            <X size={20} /> Close
                         </button>
                     )}
                 </div>
 
-                {isManageMode && (
-                    <button
-                        onClick={onBack}
-                        className="back-button close-mode"
-                    >
-                        <X size={20} /> Close
-                    </button>
-                )}
-
-                {error && <div className="error-message">{error}</div>}
             </div>
         </div>
     );

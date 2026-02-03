@@ -15,7 +15,7 @@
     border: 1px solid rgba(255, 255, 255, 0.08);
     border-radius: 24px;
     padding: 2.5rem;
-    max-width: 460px;
+    max-width: 480px;
     width: 100%;
     box-shadow: 0 40px 100px rgba(0, 0, 0, 0.4);
     text-align: center;
@@ -23,15 +23,7 @@
 }
 
 .brand-header {
-    margin-bottom: 2.5rem;
-}
-
-.couple-logo {
-    width: 72px;
-    height: 72px;
-    margin-bottom: 1.5rem;
-    filter: drop-shadow(0 10px 20px rgba(102, 126, 234, 0.3));
-    animation: float 6s ease-in-out infinite;
+    margin-bottom: 2rem;
 }
 
 .icon-badge {
@@ -50,7 +42,6 @@
     font-size: 2rem;
     font-weight: 700;
     margin-bottom: 0.5rem;
-    letter-spacing: -0.02em;
     background: linear-gradient(135deg, #ffffff 0%, #a5b4fc 100%);
     -webkit-background-clip: text;
     background-clip: text;
@@ -60,245 +51,263 @@
 .couple-subtitle {
     color: rgba(255, 255, 255, 0.6);
     font-size: 1rem;
-    line-height: 1.5;
 }
 
-.connection-options {
+/* Invitations Section */
+.invitations-section {
+    margin-bottom: 2rem;
+    text-align: left;
+}
+
+.section-header {
+    font-size: 1rem;
+    color: rgba(255, 255, 255, 0.8);
+    margin-bottom: 1rem;
+    font-weight: 600;
+}
+
+.invites-list {
     display: flex;
     flex-direction: column;
+    gap: 0.75rem;
+}
+
+.invite-card {
+    background: rgba(255, 255, 255, 0.08);
+    border: 1px solid rgba(255, 255, 255, 0.1);
+    border-radius: 16px;
+    padding: 1rem;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    transition: all 0.2s ease;
+}
+
+.invite-info {
+    display: flex;
+    align-items: center;
     gap: 1rem;
 }
 
-.option-button {
-    background: rgba(255, 255, 255, 0.03);
-    border: 1px solid rgba(255, 255, 255, 0.08);
-    border-radius: 16px;
-    padding: 1.25rem;
-    cursor: pointer;
-    transition: all 0.2s ease;
-    display: flex;
-    align-items: center;
-    gap: 1.25rem;
-    text-align: left;
-    position: relative;
-    overflow: hidden;
+.invite-avatar {
+    width: 40px;
+    height: 40px;
+    border-radius: 50%;
+    border: 2px solid #667eea;
 }
 
-.option-button::before {
-    content: '';
-    position: absolute;
-    top: 0;
-    left: 0;
-    width: 100%;
-    height: 100%;
-    background: linear-gradient(90deg, transparent, rgba(255, 255, 255, 0.05), transparent);
-    transform: translateX(-100%);
-    transition: 0.5s;
-}
-
-.option-button:hover::before {
-    transform: translateX(100%);
-}
-
-.option-button:hover:not(:disabled) {
-    background: rgba(255, 255, 255, 0.08);
-    border-color: rgba(255, 255, 255, 0.2);
-    transform: translateY(-2px);
-    box-shadow: 0 10px 30px rgba(0, 0, 0, 0.2);
-}
-
-.option-icon-wrapper {
-    width: 48px;
-    height: 48px;
-    background: rgba(255, 255, 255, 0.05);
-    border-radius: 12px;
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    color: #a5b4fc;
-}
-
-.option-button.generate .option-icon-wrapper {
-    color: #667eea;
-    background: rgba(102, 126, 234, 0.1);
-}
-
-.option-button.join .option-icon-wrapper {
-    color: #f5576c;
-    background: rgba(245, 87, 108, 0.1);
-}
-
-.option-button.skip .option-icon-wrapper {
-    color: #4facfe;
-    background: rgba(79, 172, 254, 0.1);
-}
-
-.option-content h3 {
+.invite-name {
+    font-weight: 600;
     color: white;
-    font-size: 1.1rem;
-    font-weight: 600;
-    margin-bottom: 0.2rem;
+    font-size: 1rem;
+    margin: 0;
 }
 
-.option-content p {
-    color: rgba(255, 255, 255, 0.5);
-    font-size: 0.85rem;
+.invite-status {
+    font-size: 0.8rem;
+    color: rgba(255, 255, 255, 0.6);
+    margin: 0;
 }
 
-.code-display {
-    margin: 2rem 0;
-}
-
-.code-box {
-    background: rgba(0, 0, 0, 0.3);
-    border: 1px solid rgba(255, 255, 255, 0.1);
-    border-radius: 16px;
-    padding: 1.5rem;
-    font-size: 2.5rem;
-    font-weight: 700;
-    letter-spacing: 0.4em;
-    color: #667eea;
-    margin-bottom: 1rem;
-    font-family: 'Outfit', monospace;
-    text-shadow: 0 0 20px rgba(102, 126, 234, 0.3);
-}
-
-.copy-button {
-    background: rgba(102, 126, 234, 0.1);
-    border: 1px solid rgba(102, 126, 234, 0.3);
-    border-radius: 100px;
-    padding: 0.75rem 1.5rem;
-    color: #667eea;
-    font-family: inherit;
-    font-weight: 600;
-    cursor: pointer;
-    transition: all 0.2s;
-    display: inline-flex;
-    align-items: center;
+.invite-actions {
+    display: flex;
     gap: 0.5rem;
 }
 
-.copy-button:hover {
-    background: rgba(102, 126, 234, 0.2);
-    transform: scale(1.05);
+.accept-btn,
+.decline-btn {
+    background: none;
+    border: none;
+    cursor: pointer;
+    transition: transform 0.2s;
+    padding: 0;
+    display: flex;
+    align-items: center;
+    justify-content: center;
 }
 
-.code-input-section {
-    margin: 2rem 0;
+.accept-btn:hover,
+.decline-btn:hover {
+    transform: scale(1.1);
 }
 
-.code-input {
-    background: rgba(0, 0, 0, 0.3);
-    border: 2px solid rgba(255, 255, 255, 0.1);
-    border-radius: 16px;
-    padding: 1.25rem;
-    font-size: 1.75rem;
-    color: white;
-    font-family: 'Outfit', monospace;
-    text-align: center;
-    letter-spacing: 0.4em;
+/* Send Invitation Section */
+.send-invite-section {
+    margin-bottom: 2rem;
+}
+
+.input-with-icon {
+    position: relative;
+    margin-bottom: 1rem;
+}
+
+.input-icon {
+    position: absolute;
+    left: 1rem;
+    top: 50%;
+    transform: translateY(-50%);
+    color: rgba(255, 255, 255, 0.4);
+    pointer-events: none;
+}
+
+.email-search-input {
     width: 100%;
-    margin-bottom: 1.5rem;
-    text-transform: uppercase;
+    background: rgba(0, 0, 0, 0.2);
+    border: 1px solid rgba(255, 255, 255, 0.1);
+    border-radius: 16px;
+    padding: 1rem 1rem 1rem 3rem;
+    font-size: 1rem;
+    color: white;
+    font-family: inherit;
     transition: all 0.3s;
 }
 
-.code-input:focus {
+.email-search-input:focus {
     outline: none;
     border-color: #667eea;
+    background: rgba(0, 0, 0, 0.3);
     box-shadow: 0 0 0 4px rgba(102, 126, 234, 0.15);
-    background: rgba(0, 0, 0, 0.4);
 }
 
-.connect-button {
+.send-invite-btn {
     background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
     border: none;
     border-radius: 16px;
-    padding: 1.25rem;
+    padding: 1rem;
+    width: 100%;
     color: white;
-    font-family: inherit;
     font-weight: 600;
     font-size: 1.1rem;
     cursor: pointer;
-    transition: all 0.3s ease;
-    width: 100%;
-    box-shadow: 0 10px 25px rgba(118, 75, 162, 0.3);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 0.75rem;
+    transition: all 0.3s;
+    font-family: inherit;
 }
 
-.connect-button:hover:not(:disabled) {
+.send-invite-btn:hover:not(:disabled) {
     transform: translateY(-2px);
-    box-shadow: 0 15px 35px rgba(118, 75, 162, 0.4);
+    box-shadow: 0 10px 25px rgba(102, 126, 234, 0.3);
 }
 
-.connect-button:disabled {
+.send-invite-btn:disabled {
     opacity: 0.6;
     cursor: not-allowed;
-    filter: grayscale(1);
 }
 
-.back-button,
-.switch-button {
-    background: transparent;
+/* Sent List */
+.sent-list {
+    margin-top: 1.5rem;
+    text-align: left;
+    background: rgba(255, 255, 255, 0.03);
+    border-radius: 12px;
+    padding: 1rem;
+}
+
+.sent-label {
+    font-size: 0.85rem;
+    color: rgba(255, 255, 255, 0.5);
+    margin-bottom: 0.5rem;
+}
+
+.sent-item {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    font-size: 0.9rem;
+    color: rgba(255, 255, 255, 0.8);
+    padding: 0.5rem 0;
+    border-bottom: 1px solid rgba(255, 255, 255, 0.05);
+}
+
+.sent-item:last-child {
+    border-bottom: none;
+}
+
+.cancel-sent-btn {
+    background: none;
     border: none;
-    padding: 0.75rem 1.5rem;
-    color: rgba(255, 255, 255, 0.6);
-    font-family: inherit;
-    font-weight: 500;
+    color: #f5576c;
+    font-size: 0.8rem;
     cursor: pointer;
-    transition: all 0.2s;
+    opacity: 0.7;
+}
+
+.cancel-sent-btn:hover {
+    opacity: 1;
+    text-decoration: underline;
+}
+
+/* Footer Options */
+.footer-options {
+    margin-top: 2rem;
+}
+
+.divider-line {
+    height: 1px;
+    background: rgba(255, 255, 255, 0.1);
+    margin: 1.5rem 0;
+}
+
+.text-link-btn {
+    background: none;
+    border: none;
+    color: rgba(255, 255, 255, 0.6);
+    cursor: pointer;
+    font-size: 0.95rem;
+    text-decoration: underline;
+    transition: color 0.2s;
+    font-family: inherit;
+}
+
+.text-link-btn:hover {
+    color: white;
+}
+
+.back-button.close-mode {
+    width: 100%;
+    margin-top: 1rem;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    gap: 0.5rem;
+    background: rgba(255, 255, 255, 0.05);
+    border: 1px solid rgba(255, 255, 255, 0.1);
+    border-radius: 12px;
+    padding: 0.8rem;
+    color: rgba(255, 255, 255, 0.8);
+    cursor: pointer;
+}
+
+.back-button:hover {
+    background: rgba(255, 255, 255, 0.1);
+}
+
+/* Messages */
+.error-message {
+    background: rgba(245, 87, 108, 0.15);
+    border: 1px solid rgba(245, 87, 108, 0.3);
+    border-radius: 12px;
+    padding: 0.75rem;
+    color: #f5576c;
+    font-size: 0.9rem;
+    margin-top: 1rem;
+}
+
+.success-message {
+    background: rgba(76, 175, 80, 0.15);
+    border: 1px solid rgba(76, 175, 80, 0.3);
+    border-radius: 12px;
+    padding: 0.75rem;
+    color: #4caf50;
+    font-size: 0.9rem;
+    margin-top: 1rem;
     display: flex;
     align-items: center;
     justify-content: center;
     gap: 0.5rem;
-    margin: 0 auto;
-    border-radius: 8px;
-}
-
-.switch-button {
-    color: #4facfe;
-    margin-top: 1rem;
-}
-
-.back-button:hover,
-.switch-button:hover {
-    color: white;
-    background: rgba(255, 255, 255, 0.05);
-}
-
-.back-button.close-mode {
-    margin-top: 2rem;
-    width: 100%;
-    border-top: 1px solid rgba(255, 255, 255, 0.1);
-    border-radius: 0;
-    padding-top: 1.5rem;
-}
-
-.spinner-small {
-    width: 24px;
-    height: 24px;
-    border: 2px solid rgba(255, 255, 255, 0.1);
-    border-top-color: #667eea;
-    border-radius: 50%;
-    animation: spin 1s linear infinite;
-    margin: 0 auto 0.5rem;
-}
-
-@keyframes spin {
-    to {
-        transform: rotate(360deg);
-    }
-}
-
-@keyframes float {
-
-    0%,
-    100% {
-        transform: translateY(0);
-    }
-
-    50% {
-        transform: translateY(-10px);
-    }
 }
 
 @keyframes fadeInUp {
@@ -310,38 +319,5 @@
     to {
         opacity: 1;
         transform: translateY(0);
-    }
-}
-
-.waiting-indicator {
-    margin: 2rem 0;
-    padding: 1rem;
-    background: rgba(255, 255, 255, 0.02);
-    border-radius: 12px;
-}
-
-.waiting-indicator p {
-    color: rgba(255, 255, 255, 0.5);
-    font-size: 0.9rem;
-    margin: 0;
-}
-
-.error-message {
-    background: rgba(245, 87, 108, 0.2);
-    border: 1px solid rgba(245, 87, 108, 0.3);
-    border-radius: 8px;
-    padding: 0.75rem;
-    color: #f5576c;
-    font-size: 0.9rem;
-    margin-top: 1rem;
-}
-
-@media (max-width: 480px) {
-    .couple-connection-card {
-        padding: 1.5rem;
-    }
-
-    .couple-title {
-        font-size: 1.5rem;
     }
 }
