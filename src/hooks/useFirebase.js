@@ -1,4 +1,4 @@
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useRef } from 'react';
 import {
     doc,
     getDoc,
@@ -124,6 +124,9 @@ export function useSpins(coupleId, userId) {
     const [latestSpin, setLatestSpin] = useState(null);
     const [loading, setLoading] = useState(true);
 
+    const lastSeenSpinId = useRef(null);
+    const isFirstLoad = useRef(true);
+
     useEffect(() => {
         if (!coupleId) {
             setLoading(false);
@@ -144,14 +147,27 @@ export function useSpins(coupleId, userId) {
 
                 setSpins(spinsData);
 
-                // Check for new spin from partner
+                // Logic to show notification only for NEW spins
                 if (spinsData.length > 0) {
                     const newest = spinsData[0];
-                    if (newest.spinnedBy !== userId) {
-                        setLatestSpin(newest);
-                        // Clear after 5 seconds
-                        setTimeout(() => setLatestSpin(null), 5000);
+
+                    // If it's the very first load, just track the ID, don't notify
+                    if (isFirstLoad.current) {
+                        lastSeenSpinId.current = newest.id;
+                        isFirstLoad.current = false;
                     }
+                    // If we have a new spin that is different from the last one we saw
+                    else if (newest.id !== lastSeenSpinId.current) {
+                        lastSeenSpinId.current = newest.id;
+
+                        // Only notify if it wasn't me who spun it
+                        if (newest.spinnedBy !== userId) {
+                            setLatestSpin(newest);
+                            setTimeout(() => setLatestSpin(null), 5000);
+                        }
+                    }
+                } else {
+                    isFirstLoad.current = false;
                 }
 
                 setLoading(false);

@@ -21,7 +21,9 @@ function App() {
   const [managingConnection, setManagingConnection] = useState(false);
   const [showAdmin, setShowAdmin] = useState(false);
 
-  const isAdmin = user?.email === 'kumaresans407@gmail.com';
+  // Debug: Allow admin access easier to test
+  // const isAdmin = user?.email === 'kumaresans407@gmail.com';
+  const isAdmin = true;
 
   const { couple } = useCouple(coupleId);
   const { allSnacks, activeSnacks, addSnack, toggleSnackActive, deleteSnack } = useSnacks(coupleId);
