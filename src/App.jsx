@@ -1,12 +1,14 @@
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useCallback } from 'react';
 import { onAuthStateChanged, signOut } from 'firebase/auth';
-import { auth } from './firebase';
+import { doc, updateDoc } from 'firebase/firestore';
+import { auth, db } from './firebase';
 import Auth from './components/Auth';
 import CoupleConnection from './components/CoupleConnection';
 import Header from './components/Header';
 import WheelSection from './components/WheelSection';
 import ControlsSection from './components/ControlsSection';
 import SpinNotification from './components/SpinNotification';
+import AdminDashboard from './components/AdminDashboard';
 import { useCouple, useSnacks, useSpins, usePartner } from './hooks/useFirebase';
 import './App.css';
 
@@ -17,6 +19,9 @@ function App() {
   const [spinning, setSpinning] = useState(false);
   const [result, setResult] = useState(null);
   const [managingConnection, setManagingConnection] = useState(false);
+  const [showAdmin, setShowAdmin] = useState(false);
+
+  const isAdmin = user?.email === 'kumaresans407@gmail.com';
 
   const { couple } = useCouple(coupleId);
   const { allSnacks, activeSnacks, addSnack, toggleSnackActive, deleteSnack } = useSnacks(coupleId);
@@ -39,10 +44,10 @@ function App() {
     setUser(user);
   };
 
-  const handleConnected = (newCoupleId) => {
+  const handleConnected = useCallback((newCoupleId) => {
     setCoupleId(newCoupleId);
     setManagingConnection(false);
-  };
+  }, []);
 
   const handleAddPartner = () => {
     setManagingConnection(true);
@@ -81,6 +86,21 @@ function App() {
     setManagingConnection(false);
   };
 
+  const handleDisconnect = async () => {
+    if (!user || !coupleId) return;
+
+    if (window.confirm("Are you sure you want to disconnect?")) {
+      try {
+        await updateDoc(doc(db, 'users', user.uid), { coupleId: null });
+        setCoupleId(null);
+        setManagingConnection(false);
+      } catch (error) {
+        console.error("Error disconnecting:", error);
+        alert("Failed to disconnect.");
+      }
+    }
+  };
+
   if (loading) {
     return (
       <div className="app loading-screen">
@@ -117,7 +137,31 @@ function App() {
       )}
 
       <div className="container">
-        <Header user={user} partner={partner} onLogout={handleLogout} onAddPartner={handleAddPartner} />
+        <Header
+          user={user}
+          partner={partner}
+          onLogout={handleLogout}
+          onAddPartner={handleAddPartner}
+          onDisconnect={handleDisconnect}
+        />
+
+        {isAdmin && (
+          <div style={{ textAlign: 'center', marginBottom: '1rem' }}>
+            <button
+              onClick={() => setShowAdmin(true)}
+              style={{
+                background: '#334155',
+                color: '#94a3b8',
+                border: '1px solid #475569',
+                padding: '0.5rem 1rem',
+                borderRadius: '8px',
+                cursor: 'pointer'
+              }}
+            >
+              🛡️ Open Admin Dashboard
+            </button>
+          </div>
+        )}
 
         <main className="main-content">
           <WheelSection
@@ -143,6 +187,8 @@ function App() {
           <p>Made with ❤️ {partner ? `for you & ${partner.name}` : 'for you'}</p>
         </footer>
       </div>
+
+      {showAdmin && isAdmin && <AdminDashboard onClose={() => setShowAdmin(false)} />}
     </div>
   );
 }

@@ -1,7 +1,7 @@
-import { Heart, SignOut, UserPlus, Popcorn } from '@phosphor-icons/react';
+import { Heart, SignOut, UserPlus, Popcorn, UserMinus } from '@phosphor-icons/react';
 import './Header.css';
 
-function Header({ user, partner, onLogout, onAddPartner }) {
+function Header({ user, partner, onLogout, onAddPartner, onDisconnect }) {
     return (
         <header className="header">
             <div className="header-content">
@@ -14,6 +14,9 @@ function Header({ user, partner, onLogout, onAddPartner }) {
                         {partner ? (
                             <p className="connection-status connected">
                                 Connected with {partner.name} <Heart weight="fill" color="#f5576c" className="heart-icon" />
+                                <button onClick={onDisconnect} className="disconnect-icon-btn" title="Disconnect">
+                                    <UserMinus size={16} />
+                                </button>
                             </p>
                         ) : (
                             <p className="connection-status solo">
@@ -44,7 +47,7 @@ function Header({ user, partner, onLogout, onAddPartner }) {
                 </div>
             </div>
             <p className="subtitle">Can't decide what to eat? Let the wheel choose for you!</p>
-        </header>
+        </header >
     );
 }
 

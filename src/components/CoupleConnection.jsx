@@ -1,5 +1,5 @@
-import { useState, useEffect } from 'react';
-import { doc, setDoc, getDoc, updateDoc, collection, query, where, getDocs, onSnapshot, deleteDoc, addDoc } from 'firebase/firestore';
+import { useState, useEffect, useRef } from 'react';
+import { doc, setDoc, getDoc, updateDoc, collection, query, where, getDocs, onSnapshot, deleteDoc, addDoc, writeBatch } from 'firebase/firestore';
 import { Heart, PaperPlaneRight, User, ArrowLeft, EnvelopeSimple, CheckCircle, XCircle, UserPlus, X } from '@phosphor-icons/react';
 import { db } from '../firebase';
 import './CoupleConnection.css';
@@ -11,6 +11,12 @@ function CoupleConnection({ user, onConnected, isManageMode, onBack, currentCoup
     const [successMsg, setSuccessMsg] = useState('');
     const [invitations, setInvitations] = useState([]);
     const [sentInvites, setSentInvites] = useState([]);
+    const isMounted = useRef(true);
+
+    useEffect(() => {
+        isMounted.current = true;
+        return () => { isMounted.current = false; };
+    }, []);
 
     // Listen for incoming friend requests
     useEffect(() => {
@@ -140,16 +146,20 @@ function CoupleConnection({ user, onConnected, isManageMode, onBack, currentCoup
             console.error('Error sending invite:', err);
             setError(`Failed to send: ${err.message}`);
         } finally {
-            setLoading(false);
+            if (isMounted.current) setLoading(false);
         }
     };
 
     const handleAcceptInvite = async (request) => {
         setLoading(true);
         try {
+            // Use batch for atomic updates
+            const batch = writeBatch(db);
+
             // 1. Create Couple
             const coupleId = `couple_${Date.now()}`;
-            await setDoc(doc(db, 'couples', coupleId), {
+            const coupleRef = doc(db, 'couples', coupleId);
+            batch.set(coupleRef, {
                 coupleId,
                 user1Id: request.fromUserId,
                 user1Name: request.fromName,
@@ -163,20 +173,23 @@ function CoupleConnection({ user, onConnected, isManageMode, onBack, currentCoup
             });
 
             // 2. Update Both Users
-            await updateDoc(doc(db, 'users', user.uid), { coupleId });
-            await updateDoc(doc(db, 'users', request.fromUserId), { coupleId });
+            batch.update(doc(db, 'users', user.uid), { coupleId });
+            batch.update(doc(db, 'users', request.fromUserId), { coupleId });
 
             // 3. Delete Request
-            await deleteDoc(doc(db, 'requests', request.id));
+            batch.delete(doc(db, 'requests', request.id));
 
-            // 4. Connect
-            onConnected(coupleId);
+            // Commit all changes
+            await batch.commit();
+
+            // 4. Connect - handled by listener automatically when user doc updates
+            // onConnected(coupleId);
 
         } catch (err) {
             console.error('Error accepting:', err);
             setError('Failed to connect.');
         } finally {
-            setLoading(false);
+            if (isMounted.current) setLoading(false);
         }
     };
 
@@ -191,9 +204,13 @@ function CoupleConnection({ user, onConnected, isManageMode, onBack, currentCoup
     const handleSkip = async () => {
         setLoading(true);
         try {
+            const batch = writeBatch(db);
+
             // Create "Solo" couple
             const coupleId = `solo_${user.uid}_${Date.now()}`;
-            await setDoc(doc(db, 'couples', coupleId), {
+            const coupleRef = doc(db, 'couples', coupleId);
+
+            batch.set(coupleRef, {
                 coupleId,
                 user1Id: user.uid,
                 user1Name: user.displayName,
@@ -203,13 +220,15 @@ function CoupleConnection({ user, onConnected, isManageMode, onBack, currentCoup
                 connected: false // Not connected to partner
             });
 
-            await updateDoc(doc(db, 'users', user.uid), { coupleId });
-            onConnected(coupleId);
+            batch.update(doc(db, 'users', user.uid), { coupleId });
+
+            await batch.commit();
+            // onConnected(coupleId); - handled by listener
         } catch (err) {
             console.error(err);
             setError('Failed to start solo.');
         } finally {
-            setLoading(false);
+            if (isMounted.current) setLoading(false);
         }
     };
 
